@@ -1,4 +1,5 @@
 const express = require('express');
+const passport = require ('passport');
 
 const TurnController = require('../controllers/turn');
 
@@ -8,7 +9,8 @@ router.get('/', TurnController.findAll);
 
 router.get('/:pageNumber/:pageSize', TurnController.findAllPaginated);
 
-router.get('/:id', TurnController.findOne);
+router.get('/:id', passport.authenticate("jwt", { session: false }),
+ TurnController.findOne);
 
 router.post('/', TurnController.create);
 

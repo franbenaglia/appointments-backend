@@ -4,6 +4,7 @@ exports.create = async (req, res) => {
 
     if (!req.body.date && !req.body.email && !req.body.firstName && !req.body.lastName && !req.body.phone) {
         res.status(400).send({ message: "Content can not be empty!" });
+        return;
     }
 
     const turn = new TurnModel({

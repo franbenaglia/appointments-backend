@@ -1,10 +1,19 @@
 const mongoose = require('mongoose');
+const findOrCreate = require('mongoose-findorcreate');
 
 var schema = new mongoose.Schema({
+    googleId: {
+        type: String,
+        //required: true,
+    },
+    password: {
+        type: String,
+        //required: true,
+    },
     email: {
         type: String,
-        required: true,
-        unique: true
+        //required: true,
+        //unique: true
     },
     firstName: {
         type: String,
@@ -16,6 +25,8 @@ var schema = new mongoose.Schema({
     },
     phone: String,
 });
+
+schema.plugin(findOrCreate);
 
 const user = new mongoose.model('User', schema);
 
