@@ -1,5 +1,3 @@
-//https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-//https://medium.com/techvblogs/build-crud-api-with-node-js-express-and-mongodb-e3aa58da3915
 
 const express = require('express');
 const cors = require('cors');
@@ -8,14 +6,16 @@ const dbConfig = require('./config/database.config.js');
 const mongoose = require('mongoose');
 const userRoute = require('./routes/user');
 const turnRoute = require('./routes/turn');
+//const emailRoute = require('./routes/email');
 const googleOauth2Route = require('./routes/googleoauth2.js');
-const authRouter = require ('./security/auth.js');
+const authRouter = require('./security/auth.js');
 const dotenv = require('dotenv');
 const cookieSession = require('cookie-session');
-const passport =  require('./security/passport.js');
-const PORT =  require('./config/constants').PORT;
+const passport = require('./security/passport.js');
+const PORT = require('./config/constants').PORT;
 const session = require('express-session');
-
+//const defaultTurnData = require('./config/defaultdata.js');
+const AvailableRangeTurn = require('./models/availablerangeturns');
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(bodyParser.json());
 
-const whitelist = ['http://localhost:3100','http://localhost:4200', 'http://localhost:8500', 'http://localhost:8100',];
+const whitelist = ['http://localhost:3100', 'http://localhost:4200', 'http://localhost:8500', 'http://localhost:8100',];
 const corsOptions = {
     origin: function (origin, callback) {
         if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -39,16 +39,10 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 app.use(session({
-    secret: 'somethingsecretgoeshere',
+    secret: 'thesessionsecret',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
- }));
-
-//app.use(cookieSession({
-//    name: 'google-auth-session',
-//    keys: ['key1', 'key2']
-//  }))
+    saveUninitialized: true
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -64,9 +58,39 @@ mongoose.connect(dbConfig.url, {
     process.exit();
 });
 
+
+//app.use(defaultTurnData);
+
+const defaultTurnData = async () => {
+
+    const turnRange = new AvailableRangeTurn({
+        event: 'firstEvent',
+        dayValues: [1, 5, 10, 15, 20, 25, 30],
+        hourValues: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+        minuteValues: [0, 30],
+        minDate: '2024-06-01T09:00:00',
+        maxDate: '2024-07-15T17:59:59'
+    });
+
+    //const exist = await turnRange.findOne({ event: 'firstEvent' });
+
+    //if (!exist) {
+        await turnRange.save().then(data => {
+            console.log(data);
+        }).catch(err => {
+            console.log(err);
+        });
+    //}
+
+}
+
+defaultTurnData();
+
 app.use('/user', userRoute);
 
 app.use('/turn', turnRoute);
+
+//app.use('/email', emailRoute);
 
 app.use("/api/v1/auth", authRouter);
 

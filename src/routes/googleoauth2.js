@@ -2,6 +2,8 @@ const express = require('express');
 const passport = require('../security/passport.js');
 const gOauth2Controller = require('../controllers/googleoauth2.js');
 const frontendserver = require('../config/constants.js').FRONT_END_SERVER;
+const jwt = require('jsonwebtoken');
+const SECRET = require('../config/constants').SECRET;
 
 const router = express.Router();
 
@@ -15,29 +17,62 @@ router.get('/google',
     passport.authenticate('google', {
         scope:
             ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
-            accessType: 'offline',
-            prompt: 'consent',    
+        accessType: 'offline',
+        prompt: 'consent',
     }
     ),
     (req, res) => {
         // do something with req.user
         res.send(req.user ? 200 : 401);
-      },
+    },
 
 );
 
 router.get('/google/callback',
     passport.authenticate('google', {
-        failureRedirect: 'http://localhost:8100/login',
+        failureRedirect: frontendserver + '/login',
     }),
-    function (req, res) {
-        if(req.user.token){
-            console.log('token almacenado: '+req.user.token);
-        }
-        req.session.token = req.user.token;
-        res.redirect(frontendserver + '/success_oauth2') ///googleoauth2/success
+
+    (req, res) => {
+
+        const token = jwt.sign(
+            { user: req.user },
+            SECRET,
+            { expiresIn: "1h" },
+        );
+        res.cookie('googleJwtToken', token);
+        res.redirect(frontendserver + '/');
 
     }
 );
+
+router.get('/github',
+    passport.authenticate('github', {
+        scope:
+            ['read:user', 'user:email'],
+        accessType: 'offline',
+        prompt: 'consent',
+    }
+    )
+);
+
+router.get('/github/callback',
+    passport.authenticate('github', {
+        failureRedirect: frontendserver + '/login',
+    }),
+
+    (req, res) => {
+
+        const token = jwt.sign(
+            { user: req.user },
+            SECRET,
+            { expiresIn: "1h" },
+        );
+        res.cookie('googleJwtToken', token);
+        res.redirect(frontendserver + '/');
+
+    }
+);
+
 
 module.exports = router;

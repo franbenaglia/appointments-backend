@@ -1,8 +1,13 @@
 const mongoose = require('mongoose');
 const findOrCreate = require('mongoose-findorcreate');
+const hash = require('bcrypt').hash;
 
 var schema = new mongoose.Schema({
     googleId: {
+        type: String,
+        //required: true,
+    },
+    githubId: {
         type: String,
         //required: true,
     },
@@ -24,10 +29,28 @@ var schema = new mongoose.Schema({
         default: ''
     },
     phone: String,
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
 });
 
 schema.plugin(findOrCreate);
 
-const user = new mongoose.model('User', schema);
+schema.pre('save', async function (next) {
 
-module.exports = user;
+    const hashedPassword = await hash(this.password ? this.password : 'azhAZH', 10);
+    this.password = hashedPassword;
+
+    next();
+});
+
+schema.method('isValidPassword', async function (password) {
+    const isValid = await compare(password, this.password);
+    return isValid;
+});
+
+const User = new mongoose.model('User', schema);
+
+module.exports = User;

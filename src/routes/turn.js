@@ -7,14 +7,22 @@ const router = express.Router();
 
 router.get('/', TurnController.findAll);
 
+router.get('/availableRange/:event', TurnController.findAvailableRange);
+
+router.put('/availableRange/:event', TurnController.createAvailableRange);
+
+router.post('/availableRange', TurnController.createAvailableRange);
+
+router.get('/:pageNumber/:pageSize/:email', TurnController.findAllPaginatedByUserEMail);
+
 router.get('/:pageNumber/:pageSize', TurnController.findAllPaginated);
+
+router.put('/:id', TurnController.update);
 
 router.get('/:id', passport.authenticate("jwt", { session: false }),
  TurnController.findOne);
 
 router.post('/', TurnController.create);
-
-router.patch('/:id', TurnController.update);
 
 router.delete('/:id', TurnController.destroy);
 

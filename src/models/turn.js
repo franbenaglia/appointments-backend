@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const User = require('../models/user');
+
 
 var schema = new mongoose.Schema({
     date: {
@@ -6,20 +8,16 @@ var schema = new mongoose.Schema({
         required: true,
         unique: false
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true
+    user: { type: mongoose.Schema.ObjectId, ref: "User" },
+    cancelUser: {
+        type: Boolean,
+        required: false
     },
-    firstName: {
-        type: String,
-        default: ''
+    cancelAdmin: {
+        type: Boolean,
+        required: false
     },
-    lastName: {
-        type: String,
-        default: ''
-    },
-    phone: String,
+
 });
 
 const turn = new mongoose.model('Turn', schema);
