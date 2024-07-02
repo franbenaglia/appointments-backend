@@ -31,7 +31,7 @@ const mailOptions = (from, to, subject, text) => {
 
     return {
         from: from,
-        to: to,
+        to: 'fbenaglia@hotmail.com',
         subject: subject,
         text: text,
         //html: `
@@ -50,14 +50,14 @@ const mailOptions = (from, to, subject, text) => {
 };
 
 
-const trans = transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-        console.log(error);
-    } else {
-        console.log('Email sent: ' + info.response);
-    }
-});
-
-
+const trans = () => {
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+}
 
 module.exports = emailSender;

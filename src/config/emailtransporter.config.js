@@ -3,7 +3,10 @@ const email = require('../config/constants.js').EMAIL;
 const pass = require('../config/constants.js').PASSWORD;
 
 const transporter = nodemailer.createTransport({
-    service: 'hotmail',
+    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: email,
       pass: pass

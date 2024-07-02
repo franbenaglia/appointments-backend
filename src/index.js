@@ -6,7 +6,7 @@ const dbConfig = require('./config/database.config.js');
 const mongoose = require('mongoose');
 const userRoute = require('./routes/user');
 const turnRoute = require('./routes/turn');
-//const emailRoute = require('./routes/email');
+const emailRoute = require('./routes/email');
 const googleOauth2Route = require('./routes/googleoauth2.js');
 const authRouter = require('./security/auth.js');
 const dotenv = require('dotenv');
@@ -15,6 +15,7 @@ const passport = require('./security/passport.js');
 const PORT = require('./config/constants').PORT;
 const session = require('express-session');
 //const defaultTurnData = require('./config/defaultdata.js');
+//const defaultEventData = require('./config/defaultdata.js');
 const AvailableRangeTurn = require('./models/availablerangeturns');
 
 dotenv.config();
@@ -84,13 +85,14 @@ const defaultTurnData = async () => {
 
 }
 
-defaultTurnData();
+//defaultTurnData();
+//defaultEventData();
 
 app.use('/user', userRoute);
 
 app.use('/turn', turnRoute);
 
-//app.use('/email', emailRoute);
+app.use('/email', emailRoute);
 
 app.use("/api/v1/auth", authRouter);
 

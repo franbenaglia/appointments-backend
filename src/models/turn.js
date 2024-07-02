@@ -3,10 +3,15 @@ const User = require('../models/user');
 
 
 var schema = new mongoose.Schema({
+    event: {
+        type: String,
+        required: false,
+        unique: true
+    },
     date: {
         type: Date,
         required: true,
-        unique: false
+        unique: true
     },
     user: { type: mongoose.Schema.ObjectId, ref: "User" },
     cancelUser: {

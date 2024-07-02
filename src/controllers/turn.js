@@ -1,7 +1,8 @@
 const TurnModel = require('../models/turn');
 const AvailableRangeTurnModel = require('../models/availablerangeturns');
 const UserModel = require('../models/user');
-
+const EventModel = require('../models/theevent');
+  
 exports.create = async (req, res) => {
 
     if (!req.body.date && !req.body.user) {
@@ -12,6 +13,7 @@ exports.create = async (req, res) => {
     const turn = new TurnModel({
         date: req.body.date,
         user: req.body.user,
+        event: req.body.event
     });
 
     await turn.save().then(data => {
@@ -56,7 +58,6 @@ exports.findAllPaginated = async (req, res) => {
     }
 };
 
-//TODO VER SI ES USER COMO PARAMETRO ES NAME O OBEJTO USER
 exports.findAllPaginatedByUserEMail = async (req, res) => {
 
     try {
@@ -116,6 +117,33 @@ exports.findOne = async (req, res) => {
     }
 };
 
+exports.findAllEvents = async (req, res) => {
+    try {
+        const events = await EventModel.find();
+        res.status(200).json(events.map(e => e.event));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.findAllAvailableRange = async (req, res) => {
+    try {
+        const range = await AvailableRangeTurnModel.find();
+        res.status(200).json(range);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
+exports.findAvailableRangeById = async (req, res) => {
+    try {
+        const range = await AvailableRangeTurnModel.find({ _id: req.params.id });
+        res.status(200).json(range);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
 exports.findAvailableRange = async (req, res) => {
     try {
         const range = await AvailableRangeTurnModel.find({ event: req.params.event });
@@ -124,6 +152,113 @@ exports.findAvailableRange = async (req, res) => {
         res.status(404).json({ message: error.message });
     }
 };
+
+exports.findAvailableTimesdDates = async (req, res) => {
+    try {
+        const range = await AvailableRangeTurnModel.find({ event: req.params.event }).select('hourValues minuteValues -_id');
+
+        const dti = new Date(req.params.date.substring(0, 10) + 'T00:00:00.000Z');
+        const dts = new Date(dti);
+        const dtsup = new Date(dts.setDate(dts.getDate() + 1));
+        const datesTimesUsed = await TurnModel.find({
+            event: req.params.event,
+            date: { $gte: dti, $lt: dtsup }
+        }).select('date -_id');
+
+        const allTimeValues = joinHourMinute(range[0].hourValues, range[0].minuteValues);
+
+        const spTime = splitUsedTimes(datesTimesUsed);
+
+        const aT = availableTimes(spTime, allTimeValues);
+
+        res.status(200).json({ range: range, timeFree: aT });
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
+const availableTimes = (spTime, allTimeValues) => {
+
+    return allTimeValues.filter(atv => !spTime.includes(atv));
+
+};
+
+const splitUsedTimes = (datesTimesUsed) => {
+    let d = [];
+    datesTimesUsed.map((du) => {
+        let date = du.date.toLocaleTimeString();
+        let hourminutes = date.substring(0, 4);
+        d.push(hourminutes);
+    });
+    return d;
+}
+
+exports.findAvailableDates = async (req, res) => {
+    try {
+        const range = await AvailableRangeTurnModel.find({ event: req.params.event });
+        const datesUsed = await TurnModel.find({ event: req.params.event }).select('date -_id');;
+        const dates = processDatesUsed(datesUsed, range);
+
+        res.status(200).json({ range: range, datesUsed: dates });
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
+
+const processDatesUsed = (datesUsed, range) => {
+    const timeValues = joinHourMinute(range[0].hourValues, range[0].minuteValues);
+    const spDates = splitUsedDates(datesUsed);
+    const gd = groupDates(spDates);
+    return datesWithNotPlace(gd, timeValues);
+}
+
+
+const datesWithNotPlace = (gd, timeValues) => {
+
+    let ad = [];
+ 
+    for (let i = 0; i < gd.length; i++) {
+
+        if (gd[i].hours.length === timeValues.length) {
+            ad.push(gd[i].date);
+        }
+    }
+
+    return ad;
+}
+
+const groupDates = (spDates) => {
+    let objs = [];
+    spDates.forEach(pair => {
+        let obj = objs.find(obj => obj.date === pair.date);
+        if (obj) {
+            obj.hours.push(pair.hour);
+        } else {
+            objs.push({ date: pair.date, hours: [pair.hour] });
+        }
+    });
+    return objs;
+};
+
+const splitUsedDates = (datesUsed) => {
+    let d = []; 
+    datesUsed.map((du) => {
+        let date = du.date.toISOString().substring(0, 10);
+        let hour = du.date.toISOString().substring(11, 16);
+        d.push({ date: date, hour: hour });
+    });
+    return d;
+}
+
+const joinHourMinute = (hourValues, minuteValues) => {
+    let hm = [];
+    for (i = 0; i < hourValues.length; i++) {
+        for (x = 0; x < minuteValues.length; x++) {
+            hm.push(hourValues[i] + ':' + minuteValues[x]);
+        }
+    }
+    return hm;
+}
 
 exports.update = async (req, res) => {
 
@@ -174,24 +309,25 @@ exports.destroy = async (req, res) => {
 
 exports.createAvailableRange = async (req, res) => {
 
-    if (!req.body.event) {
+    if (req.body.event) {
         res.status(400).send({ message: "event can not be empty!" });
         return;
     }
 
     const turnRange = new AvailableRangeTurnModel({
-        event: req.body.event,
+        event: req.body.eventName,
         dayValues: req.body.dayValues,
         hourValues: req.body.hourValues,
         minuteValues: req.body.minuteValues,
         minDate: req.body.minDate,
-        maxDate: req.body.maxDate
+        maxDate: req.body.maxDate,
+        weekends: req.body.weekends
     });
 
 
-    const exist = await turnRange.find({ event: req.body.event });
+    const exist = await AvailableRangeTurnModel.find({ event: req.body.eventName });
 
-    if (!exist) {
+    if (!exist.length) {
         await turnRange.save().then(data => {
             res.send({
                 message: "Turn range created successfully!!",
@@ -205,7 +341,7 @@ exports.createAvailableRange = async (req, res) => {
 
     } else {
 
-        await turnRange.findByIdAndUpdate(exist._id, req.body, { useFindAndModify: false }).then(data => {
+        await AvailableRangeTurnModel.findByIdAndUpdate(exist._id, req.body, { useFindAndModify: false }).then(data => {
             if (!data) {
                 res.status(404).send({
                     message: `Turn range not found.`

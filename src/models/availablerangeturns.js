@@ -9,27 +9,37 @@ var schema = new mongoose.Schema({
     },
     dayValues: {
         type: [Number],
-        required: true,
+        required: false,
         unique: false
     },
     hourValues: {
         type: [Number],
-        required: true,
+        required: false,
         unique: false
     },
     minuteValues: {
         type: [Number],
-        required: true,
+        required: false,
         unique: false
     },
     minDate: {
         type: String,
-        required: true,
+        required: false,
         unique: false
     },
     maxDate: {
         type: String,
-        required: true,
+        required: false,
+        unique: false
+    },
+    specificdays: {
+        type: [String],
+        required: false,
+        unique: false
+    },
+    weekends: {
+        type: Boolean,
+        required: false,
         unique: false
     }
 
