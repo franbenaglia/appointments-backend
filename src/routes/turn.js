@@ -23,7 +23,9 @@ router.get('/availableDates/:event', TurnController.findAvailableDates);
 
 router.get('/availableTimesDates/:event/:date', TurnController.findAvailableTimesdDates);
 
-router.get('/:pageNumber/:pageSize/:email', TurnController.findAllPaginatedByUserEMail);
+//router.get('/:pageNumber/:pageSize/:email', TurnController.findAllPaginatedByUserEMail);
+
+router.get('/:pageNumber/:pageSize/:email', TurnController.findPaginatedFilterByEmail);
 
 router.get('/:pageNumber/:pageSize', TurnController.findAllPaginated);
 

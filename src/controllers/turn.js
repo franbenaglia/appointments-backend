@@ -2,7 +2,8 @@ const TurnModel = require('../models/turn');
 const AvailableRangeTurnModel = require('../models/availablerangeturns');
 const UserModel = require('../models/user');
 const EventModel = require('../models/theevent');
-  
+const mongoose = require('mongoose');
+
 exports.create = async (req, res) => {
 
     if (!req.body.date && !req.body.user) {
@@ -52,6 +53,42 @@ exports.findAllPaginated = async (req, res) => {
         const totalPages = Math.trunc(rowCount / pageSize);
         const apiResponse = { page: pageNumber, per_page: pageSize, total: rowCount, total_pages: totalPages, results: turns };
         res.status(200).json(apiResponse);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('failed');
+    }
+};
+
+exports.findPaginatedFilterByEmail = async (req, res) => {
+
+    try {
+
+        const { pageNumber, pageSize, email } = req.params;
+
+        let turns;
+
+        if (email) {
+
+            const users = await UserModel.find({ email: { $regex: '.*' + email + '.*' } }).select('_id');
+
+            const result = users.map(u => u._id);
+
+            turns = await TurnModel.find({ 'user': { $in: result } }).populate('user')
+                .limit(pageSize * 1)
+                .skip((pageNumber - 1) * pageSize);
+
+        } else {
+            turns = await TurnModel.find().populate('user')
+                .limit(pageSize * 1)
+                .skip((pageNumber - 1) * pageSize);
+        }
+
+        const rowCount = await TurnModel.countDocuments();
+        const totalPages = Math.trunc(rowCount / pageSize);
+        const apiResponse = { page: pageNumber, per_page: pageSize, total: rowCount, total_pages: totalPages, results: turns };
+        
+        res.status(200).json(apiResponse);
+
     } catch (err) {
         console.error(err);
         res.status(500).send('failed');
@@ -216,7 +253,7 @@ const processDatesUsed = (datesUsed, range) => {
 const datesWithNotPlace = (gd, timeValues) => {
 
     let ad = [];
- 
+
     for (let i = 0; i < gd.length; i++) {
 
         if (gd[i].hours.length === timeValues.length) {
@@ -241,7 +278,7 @@ const groupDates = (spDates) => {
 };
 
 const splitUsedDates = (datesUsed) => {
-    let d = []; 
+    let d = [];
     datesUsed.map((du) => {
         let date = du.date.toISOString().substring(0, 10);
         let hour = du.date.toISOString().substring(11, 16);

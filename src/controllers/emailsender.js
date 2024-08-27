@@ -30,27 +30,16 @@ const emailSender = async (req, res) => {
 const mailOptions = (from, to, subject, text) => {
 
     return {
+        to: to,
         from: from,
-        to: 'fbenaglia@hotmail.com',
         subject: subject,
         text: text,
-        //html: `
-        //  <h1>Sample Heading Here</h1>
-        //  <p>message here</p>
-        //`,
-        //attachments: [
-        //    {
-        //        filename: 'image.png',
-        //        path: 'https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png>'
-        //    }
-        //]
-
     }
 
 };
 
 
-const trans = () => {
+const trans = (mailOptions) => {
     transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
             console.log(error);
