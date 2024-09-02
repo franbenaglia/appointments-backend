@@ -41,7 +41,13 @@ var schema = new mongoose.Schema({
         type: Boolean,
         required: false,
         unique: false
+    },
+    deleted: {
+        type: Boolean,
+        required: false,
+        unique: false
     }
+
 
 });
 

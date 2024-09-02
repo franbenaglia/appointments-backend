@@ -15,7 +15,9 @@ router.get('/availableRangeById/:id', TurnController.findAvailableRangeById);
 
 router.get('/availableRange/:event', TurnController.findAvailableRange);
 
-router.put('/availableRange/:event', TurnController.createAvailableRange);
+router.put('/availableRange/:id', TurnController.createAvailableRange);
+
+router.delete('/deleteRange/:id', TurnController.deleteAvailableRange);
 
 router.post('/availableRange', TurnController.createAvailableRange);
 

@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const userRoute = require('./routes/user');
 const turnRoute = require('./routes/turn');
 const emailRoute = require('./routes/email');
+const stripeRoute = require('./routes/stripe');
 const googleOauth2Route = require('./routes/googleoauth2.js');
 const authRouter = require('./security/auth.js');
 const dotenv = require('dotenv');
@@ -91,6 +92,8 @@ const defaultTurnData = async () => {
 app.use('/user', userRoute);
 
 app.use('/turn', turnRoute);
+
+app.use('/payment', stripeRoute);
 
 app.use('/email', emailRoute);
 

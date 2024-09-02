@@ -1,4 +1,5 @@
 const TurnModel = require('../models/turn');
+const { availableTimes, splitUsedTimes, processDatesUsed } = require('../functions/date-time');
 const AvailableRangeTurnModel = require('../models/availablerangeturns');
 const UserModel = require('../models/user');
 const EventModel = require('../models/theevent');
@@ -86,7 +87,7 @@ exports.findPaginatedFilterByEmail = async (req, res) => {
         const rowCount = await TurnModel.countDocuments();
         const totalPages = Math.trunc(rowCount / pageSize);
         const apiResponse = { page: pageNumber, per_page: pageSize, total: rowCount, total_pages: totalPages, results: turns };
-        
+
         res.status(200).json(apiResponse);
 
     } catch (err) {
@@ -156,8 +157,8 @@ exports.findOne = async (req, res) => {
 
 exports.findAllEvents = async (req, res) => {
     try {
-        const events = await EventModel.find();
-        res.status(200).json(events.map(e => e.event));
+        const avrt = await AvailableRangeTurnModel.find({ deleted: null });
+        res.status(200).json(avrt.map(e => e.event));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -165,7 +166,7 @@ exports.findAllEvents = async (req, res) => {
 
 exports.findAllAvailableRange = async (req, res) => {
     try {
-        const range = await AvailableRangeTurnModel.find();
+        const range = await AvailableRangeTurnModel.find({ deleted: null });
         res.status(200).json(range);
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -175,6 +176,7 @@ exports.findAllAvailableRange = async (req, res) => {
 exports.findAvailableRangeById = async (req, res) => {
     try {
         const range = await AvailableRangeTurnModel.find({ _id: req.params.id });
+        console.log(range);
         res.status(200).json(range);
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -214,22 +216,6 @@ exports.findAvailableTimesdDates = async (req, res) => {
     }
 };
 
-const availableTimes = (spTime, allTimeValues) => {
-
-    return allTimeValues.filter(atv => !spTime.includes(atv));
-
-};
-
-const splitUsedTimes = (datesTimesUsed) => {
-    let d = [];
-    datesTimesUsed.map((du) => {
-        let date = du.date.toLocaleTimeString();
-        let hourminutes = date.substring(0, 4);
-        d.push(hourminutes);
-    });
-    return d;
-}
-
 exports.findAvailableDates = async (req, res) => {
     try {
         const range = await AvailableRangeTurnModel.find({ event: req.params.event });
@@ -241,61 +227,6 @@ exports.findAvailableDates = async (req, res) => {
         res.status(404).json({ message: error.message });
     }
 };
-
-const processDatesUsed = (datesUsed, range) => {
-    const timeValues = joinHourMinute(range[0].hourValues, range[0].minuteValues);
-    const spDates = splitUsedDates(datesUsed);
-    const gd = groupDates(spDates);
-    return datesWithNotPlace(gd, timeValues);
-}
-
-
-const datesWithNotPlace = (gd, timeValues) => {
-
-    let ad = [];
-
-    for (let i = 0; i < gd.length; i++) {
-
-        if (gd[i].hours.length === timeValues.length) {
-            ad.push(gd[i].date);
-        }
-    }
-
-    return ad;
-}
-
-const groupDates = (spDates) => {
-    let objs = [];
-    spDates.forEach(pair => {
-        let obj = objs.find(obj => obj.date === pair.date);
-        if (obj) {
-            obj.hours.push(pair.hour);
-        } else {
-            objs.push({ date: pair.date, hours: [pair.hour] });
-        }
-    });
-    return objs;
-};
-
-const splitUsedDates = (datesUsed) => {
-    let d = [];
-    datesUsed.map((du) => {
-        let date = du.date.toISOString().substring(0, 10);
-        let hour = du.date.toISOString().substring(11, 16);
-        d.push({ date: date, hour: hour });
-    });
-    return d;
-}
-
-const joinHourMinute = (hourValues, minuteValues) => {
-    let hm = [];
-    for (i = 0; i < hourValues.length; i++) {
-        for (x = 0; x < minuteValues.length; x++) {
-            hm.push(hourValues[i] + ':' + minuteValues[x]);
-        }
-    }
-    return hm;
-}
 
 exports.update = async (req, res) => {
 
@@ -358,7 +289,8 @@ exports.createAvailableRange = async (req, res) => {
         minuteValues: req.body.minuteValues,
         minDate: req.body.minDate,
         maxDate: req.body.maxDate,
-        weekends: req.body.weekends
+        weekends: req.body.weekends,
+        specificdays: req.body.specificdays
     });
 
 
@@ -377,8 +309,8 @@ exports.createAvailableRange = async (req, res) => {
         });
 
     } else {
-
-        await AvailableRangeTurnModel.findByIdAndUpdate(exist._id, req.body, { useFindAndModify: false }).then(data => {
+        console.log(req.body);
+        await AvailableRangeTurnModel.findByIdAndUpdate(req.params.id, req.body, { useFindAndModify: false }).then(data => {
             if (!data) {
                 res.status(404).send({
                     message: `Turn range not found.`
@@ -397,3 +329,30 @@ exports.createAvailableRange = async (req, res) => {
 
     }
 };
+
+exports.deleteAvailableRange = async (req, res) => {
+
+    try {
+
+        req.body.deleted = true;
+
+        await AvailableRangeTurnModel.findByIdAndUpdate(req.params.id, req.body, { useFindAndModify: false }).then(data => {
+            if (!data) {
+                res.status(404).send({
+                    message: `Turn range not found.`
+                });
+            } else {
+                res.send({
+                    message: "Turn range deleted successfully.",
+                    turnRange: data
+                })
+            }
+        }).catch(err => {
+            res.status(500).send({
+                message: err.message
+            });
+        });
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+}
