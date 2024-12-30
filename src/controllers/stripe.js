@@ -1,4 +1,34 @@
 const stripe = require('stripe')('');
+const axios = require('axios');
+
+const PRIVATE_KEY_STRIPE = require('../config/constants.js').PRIVATE_KEY_STRIPE;
+
+exports.createIntent = async (req, res) => {
+
+    const amount = req.body.amount;
+    const currency = req.body.currency;
+
+    const data = {
+        amount: amount,
+        currency: currency
+    };
+
+    const encodedData = new URLSearchParams(data);
+
+    const response = await axios({
+        method: "POST",
+        url: "https://api.stripe.com/v1/payment_intents",
+        data: encodedData,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Bearer " + PRIVATE_KEY_STRIPE
+        },
+        //auth: login
+    })
+
+    res.status(200).json(response.data.client_secret);
+
+}
 
 
 exports.create = async (req, res) => {

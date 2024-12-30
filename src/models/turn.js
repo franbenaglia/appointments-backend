@@ -23,6 +23,12 @@ var schema = new mongoose.Schema({
         required: false
     },
 
+    idTx: {
+        type: String,
+        required: false,
+        unique: true
+    },
+
 });
 
 const turn = new mongoose.model('Turn', schema);
