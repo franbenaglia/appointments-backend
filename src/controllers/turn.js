@@ -1,5 +1,5 @@
 const TurnModel = require('../models/turn');
-const { availableTimes, splitUsedTimes, processDatesUsed } = require('../functions/date-time');
+const { availableTimes, splitUsedTimes, processDatesUsed, joinHourMinute } = require('../functions/date-time');
 const AvailableRangeTurnModel = require('../models/availablerangeturns');
 const UserModel = require('../models/user');
 const EventModel = require('../models/theevent');
@@ -24,6 +24,7 @@ exports.create = async (req, res) => {
             turn: data
         });
     }).catch(err => {
+        console.log('errrrrrr ' + err);
         res.status(500).send({
             message: err.message || "Some error occurred while creating turn"
         });
@@ -277,9 +278,16 @@ exports.destroy = async (req, res) => {
 
 exports.createAvailableRange = async (req, res) => {
 
-    if (req.body.event) {
+    console.log('req ' + req);
+    console.log('req event ' + req.body.event);
+
+    if (!req.body.event) {
         res.status(400).send({ message: "event can not be empty!" });
         return;
+    }
+
+    if (req.body.event) {
+        req.body.eventName = req.body.event;
     }
 
     const turnRange = new AvailableRangeTurnModel({

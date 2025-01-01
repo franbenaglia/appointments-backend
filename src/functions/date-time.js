@@ -7,8 +7,8 @@ const availableTimes = (spTime, allTimeValues) => {
 const splitUsedTimes = (datesTimesUsed) => {
     let d = [];
     datesTimesUsed.map((du) => {
-        let date = du.date.toLocaleTimeString();
-        let hourminutes = date.substring(0, 4);
+        let date = du.date.toLocaleTimeString([],{ hour12: false });
+        let hourminutes = date.substring(0, 5);
         d.push(hourminutes);
     });
     return d;
@@ -69,4 +69,4 @@ const joinHourMinute = (hourValues, minuteValues) => {
     return hm;
 }
 
-module.exports = { availableTimes, splitUsedTimes, processDatesUsed }
+module.exports = { availableTimes, splitUsedTimes, processDatesUsed, joinHourMinute }
