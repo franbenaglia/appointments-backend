@@ -42,6 +42,7 @@ router.get('/google/callback',
         );
         res.cookie('googleJwtToken', token);
         res.redirect(frontendserver + '/');
+        //res.redirect('http://testing.app/' + token); 
 
     }
 );
